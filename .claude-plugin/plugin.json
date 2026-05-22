@@ -1,0 +1,28 @@
+{
+  "name": "agentdesk",
+  "displayName": "AgentDesk",
+  "description": "Phased multi-agent workflow for software tasks: intake → plan → execute → review → summary. Each phase runs as an isolated Claude sub-agent with a shared session-memory handoff. Buys you a dedicated review pass before changes ship — without leaving your terminal. Runs standalone, no account or daemon required.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Amir Habib",
+    "email": "amir@kendoo.co",
+    "url": "https://agentdesk.live"
+  },
+  "homepage": "https://agentdesk.live",
+  "repository": "https://github.com/kendoo-rd/agentdesk-plugin",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "phased",
+    "review",
+    "code-review",
+    "multi-agent",
+    "workflow",
+    "orchestration",
+    "sub-agents",
+    "claude"
+  ],
+  "skills": [
+    "./skills/agentdesk"
+  ]
+}
