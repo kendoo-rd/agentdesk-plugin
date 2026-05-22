@@ -1,0 +1,89 @@
+name: Validate plugin
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate plugin manifest and skills
+        run: |
+          python3 << 'PYEOF'
+          import json
+          import pathlib
+          import re
+          import sys
+
+          errors = []
+          warnings = []
+
+          # 1. plugin.json
+          manifest_path = pathlib.Path(".claude-plugin/plugin.json")
+          if not manifest_path.exists():
+              errors.append(".claude-plugin/plugin.json is missing")
+          else:
+              try:
+                  manifest = json.loads(manifest_path.read_text())
+              except json.JSONDecodeError as e:
+                  errors.append(f"plugin.json is not valid JSON: {e}")
+                  manifest = None
+
+              if manifest is not None:
+                  name = manifest.get("name")
+                  if not name:
+                      errors.append('plugin.json: required field "name" missing')
+                  elif not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", name):
+                      errors.append(
+                          f'plugin.json: "name" must be kebab-case (got {name!r})'
+                      )
+
+                  for field in ("description", "version", "author", "license"):
+                      if field not in manifest:
+                          warnings.append(f'plugin.json: recommended field "{field}" missing')
+
+                  # If skills is declared, each path must resolve to a SKILL.md
+                  for skill_path in manifest.get("skills", []):
+                      p = pathlib.Path(skill_path) / "SKILL.md"
+                      if not p.exists():
+                          errors.append(f"plugin.json references missing skill: {p}")
+
+          # 2. skills/<name>/SKILL.md
+          skills_root = pathlib.Path("skills")
+          if skills_root.is_dir():
+              skill_dirs = [d for d in skills_root.iterdir() if d.is_dir()]
+              if not skill_dirs:
+                  warnings.append("skills/ exists but contains no skills")
+              for skill_dir in skill_dirs:
+                  skill_md = skill_dir / "SKILL.md"
+                  if not skill_md.exists():
+                      errors.append(f"{skill_dir}/SKILL.md missing")
+                      continue
+                  text = skill_md.read_text()
+                  m = re.match(r"^---\n(.*?)\n---\n", text, re.DOTALL)
+                  if not m:
+                      errors.append(f"{skill_md}: YAML frontmatter (---) is missing or malformed")
+                      continue
+                  fm = m.group(1)
+                  for required in ("name:", "description:"):
+                      if required not in fm:
+                          errors.append(f'{skill_md}: frontmatter missing "{required.rstrip(":")}"')
+
+          # 3. LICENSE present (community marketplace expects one)
+          if not pathlib.Path("LICENSE").exists():
+              warnings.append("LICENSE file missing at repo root")
+
+          for w in warnings:
+              print(f"WARN: {w}")
+          for e in errors:
+              print(f"FAIL: {e}")
+
+          if errors:
+              sys.exit(1)
+          print("OK: plugin manifest and skills validated")
+          PYEOF
