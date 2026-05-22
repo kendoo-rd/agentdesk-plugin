@@ -33,6 +33,39 @@ Or paste a tracker URL (Linear, Jira, or GitHub issue):
 
 The skill restates the task, asks for confirmation, then runs the five phases sequentially. Total wall time is typically 3–10 minutes for a small-to-medium task.
 
+## Example session
+
+A representative run on a small Node project (illustrative — your output will vary):
+
+```text
+> /agentdesk:agentdesk Add a greet(name) function in greet.js that returns
+  'Hello, <name>!', plus a node:test covering it. Make sure npm test passes.
+
+I'll run this through the full five-phase loop:
+  INTAKE → PLAN → EXECUTION → REVIEW → SUMMARY
+
+Proceed? [y/N] y
+
+▸ INTAKE  · 38s · assessed scope (single session, ~2 files)
+▸ PLAN    · 51s · named export, node:assert/strict, one positive test
+▸ EXECUTION · 1m 12s · wrote greet.js + greet.test.js · npm test 1/1 pass
+▸ REVIEW  · 58s · independent verification · verdict: APPROVE
+▸ SUMMARY · 22s
+
+✓ AgentDesk run complete
+
+Added greet.js (ESM named-export greet(name) returning `Hello, ${name}!`)
+and greet.test.js (a node:test + node:assert/strict test asserting
+greet('World') === 'Hello, World!'). npm test passes 1/1, exit 0. No edits
+to package.json and no new dependencies. REVIEW returned APPROVE with no
+blockers or should-fix items.
+
+PR: no PR created (no git remote configured)
+Session memory: .agentdesk/session-memory.md
+```
+
+The REVIEW phase is where the loop earns its keep — it re-runs the test suite independently, reads the modified files in full (not just the diff hunks), and checks the changes against the acceptance criteria PLAN wrote down. On a different task with a subtle defect, REVIEW would flag it as `Blocker` or `Should-fix` and the run pauses for you to decide.
+
 ## What you get
 
 - A dedicated REVIEW phase that runs as a separate Claude — independent eyes on the diff before it ships.
