@@ -83,9 +83,16 @@ For those features, see the [full AgentDesk product](https://agentdesk.live) —
 
 ## Data flow
 
-The plugin makes no outbound network calls of its own. It runs entirely inside your Claude Code session.
+The plugin sends no telemetry. It has no AgentDesk server, account or analytics: nothing about your sessions, code or tasks is sent to AgentDesk.
 
-The only optional outbound traffic is the standard Claude Code `WebFetch` tool, which the skill uses to fetch a task description when you pass a tracker URL. That goes through Claude Code's own tool layer, not a separate AgentDesk pipe.
+It runs inside your Claude Code session, so the normal network activity of Claude Code and the tools it runs still happens. During a run, that can include:
+
+- **Claude itself:** your prompts and the files the phases read go to your Claude provider, as in any Claude Code session.
+- **`WebFetch`:** when you pass a tracker URL, the intake phase fetches the task description through Claude Code's `WebFetch` tool.
+- **`gh pr view`:** the summary phase checks whether the current branch has an open pull request, if the GitHub CLI is installed. This contacts GitHub with your own `gh` login.
+- **Your project's own commands:** the execute phase runs the project's tests, lint and type checks. Whatever those commands do on the network (installing packages, calling services in integration tests) happens as it would if you ran them yourself.
+
+All of these run through Claude Code's normal tools and follow your Claude Code permission settings.
 
 ## License
 
